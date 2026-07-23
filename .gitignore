@@ -1,0 +1,12 @@
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+backend/*.exe
+backend/*.exe~
+backend/*.dll
+backend/*.so
+backend/*.dylib
+backend/vendor/
+.env
+.DS_Store
+Thumbs.db
