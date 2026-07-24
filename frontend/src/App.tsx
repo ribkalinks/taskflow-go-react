@@ -10,15 +10,25 @@ interface Task {
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch tasks dari backend Go
+  // Fetch tasks dari backend Go dengan indikator loading & error
   const fetchTasks = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await fetch('http://localhost:8080/api/tasks');
+      if (!res.ok) {
+        throw new Error("Gagal mengambil data dari server");
+      }
       const data = await res.json();
       setTasks(data);
     } catch (err) {
       console.error("Gagal mengambil data task:", err);
+      setError("Tidak dapat terhubung ke server backend.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,38 +115,44 @@ function App() {
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>Simpan</button>
       </form>
 
+      {/* Indikator Loading & Error */}
+      {loading && <p style={{ color: '#666' }}>Memuat data...</p>}
+      {error && <p style={{ color: '#ff4d4f' }}>{error}</p>}
+
       {/* Daftar Task */}
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.5rem 0',
-              borderBottom: '1px solid #ddd',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input
-                type="checkbox"
-                checked={task.done}
-                onChange={() => toggleTask(task.id, task.done)}
-              />
-              <span style={{ textDecoration: task.done ? 'line-through' : 'none', color: task.done ? '#888' : '#000' }}>
-                {task.title}
-              </span>
-            </div>
-            <button
-              onClick={() => deleteTask(task.id)}
-              style={{ background: '#ff4d4f', color: '#white', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
+      {!loading && !error && (
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {tasks.map((task) => (
+            <li
+              key={task.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #ddd',
+              }}
             >
-              Hapus
-            </button>
-          </li>
-        ))}
-      </ul>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={task.done}
+                  onChange={() => toggleTask(task.id, task.done)}
+                />
+                <span style={{ textDecoration: task.done ? 'line-through' : 'none', color: task.done ? '#888' : '#000' }}>
+                  {task.title}
+                </span>
+              </div>
+              <button
+                onClick={() => deleteTask(task.id)}
+                style={{ background: '#ff4d4f', color: '#fff', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
+              >
+                Hapus
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
