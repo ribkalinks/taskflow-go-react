@@ -99,6 +99,9 @@ function App() {
     }
   };
 
+  // Menghitung just task yang belum selesai
+  const unresolvedTaskCount = tasks.filter((task) => !task.done).length;
+
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
       <h1>TaskFlow Full-Stack</h1>
@@ -118,6 +121,10 @@ function App() {
       {/* Indikator Loading & Error */}
       {loading && <p style={{ color: '#666' }}>Memuat data...</p>}
       {error && <p style={{ color: '#ff4d4f' }}>{error}</p>}
+
+      <p style={{ color: '#555', marginBottom: '1rem' }}>
+  Task belum selesai: {unresolvedTaskCount}
+</p>
 
       {/* Daftar Task */}
       {!loading && !error && (
