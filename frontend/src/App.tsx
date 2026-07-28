@@ -12,6 +12,7 @@ function App() {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   // Fetch tasks dari backend Go dengan indikator loading & error
   const fetchTasks = async () => {
@@ -99,8 +100,15 @@ function App() {
     }
   };
 
-  // Menghitung just task yang belum selesai
+  // Menghitung task yang belum selesai
   const unresolvedTaskCount = tasks.filter((task) => !task.done).length;
+
+  // Logika menyaring task berdasarkan filter yang dipilih
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === 'active') return !task.done;
+    if (filter === 'completed') return task.done;
+    return true; // 'all'
+  });
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
@@ -122,14 +130,37 @@ function App() {
       {loading && <p style={{ color: '#666' }}>Memuat data...</p>}
       {error && <p style={{ color: '#ff4d4f' }}>{error}</p>}
 
+      {/* Informasi Jumlah Task */}
       <p style={{ color: '#555', marginBottom: '1rem' }}>
-  Task belum selesai: {unresolvedTaskCount}
-</p>
+        Task belum selesai: {unresolvedTaskCount}
+      </p>
+
+      {/* Tombol Filter */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button 
+          onClick={() => setFilter('all')}
+          style={{ background: filter === 'all' ? '#007bff' : '#eee', color: filter === 'all' ? '#fff' : '#000', border: 'none', padding: '0.3rem 0.6rem', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          Semua
+        </button>
+        <button 
+          onClick={() => setFilter('active')}
+          style={{ background: filter === 'active' ? '#007bff' : '#eee', color: filter === 'active' ? '#fff' : '#000', border: 'none', padding: '0.3rem 0.6rem', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          Belum Selesai
+        </button>
+        <button 
+          onClick={() => setFilter('completed')}
+          style={{ background: filter === 'completed' ? '#007bff' : '#eee', color: filter === 'completed' ? '#fff' : '#000', border: 'none', padding: '0.3rem 0.6rem', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          Selesai
+        </button>
+      </div>
 
       {/* Daftar Task */}
       {!loading && !error && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <li
               key={task.id}
               style={{
