@@ -10,11 +10,12 @@ interface Task {
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // State untuk pencarian
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
-  // Fetch tasks dari backend Go dengan indikator loading & error
+  // Fetch tasks dari backend Go
   const fetchTasks = async () => {
     try {
       setLoading(true);
@@ -103,19 +104,23 @@ function App() {
   // Menghitung task yang belum selesai
   const unresolvedTaskCount = tasks.filter((task) => !task.done).length;
 
-  // Logika menyaring task berdasarkan filter yang dipilih
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === 'active') return !task.done;
-    if (filter === 'completed') return task.done;
-    return true; // 'all'
-  });
+  // Logika Filter Status + Pencarian Teks Sekaligus
+  const filteredTasks = tasks
+    .filter((task) => {
+      if (filter === 'active') return !task.done;
+      if (filter === 'completed') return task.done;
+      return true; // 'all'
+    })
+    .filter((task) => 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
       <h1>TaskFlow Full-Stack</h1>
 
       {/* Form Tambah Task */}
-      <form onSubmit={addTask} style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem' }}>
+      <form onSubmit={addTask} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
         <input
           type="text"
           placeholder="Tambah task baru..."
@@ -125,6 +130,15 @@ function App() {
         />
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>Simpan</button>
       </form>
+
+      {/* Input Search / Pencarian */}
+      <input
+        type="text"
+        placeholder="Cari task..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={{ width: '100%', padding: '0.5rem', marginBottom: '1.5rem', boxSizing: 'border-box' }}
+      />
 
       {/* Indikator Loading & Error */}
       {loading && <p style={{ color: '#666' }}>Memuat data...</p>}
@@ -160,35 +174,39 @@ function App() {
       {/* Daftar Task */}
       {!loading && !error && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {filteredTasks.map((task) => (
-            <li
-              key={task.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.5rem 0',
-                borderBottom: '1px solid #ddd',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={task.done}
-                  onChange={() => toggleTask(task.id, task.done)}
-                />
-                <span style={{ textDecoration: task.done ? 'line-through' : 'none', color: task.done ? '#888' : '#000' }}>
-                  {task.title}
-                </span>
-              </div>
-              <button
-                onClick={() => deleteTask(task.id)}
-                style={{ background: '#ff4d4f', color: '#fff', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
+          {filteredTasks.length === 0 ? (
+            <p style={{ color: '#888', fontStyle: 'italic' }}>Tidak ada task yang ditemukan.</p>
+          ) : (
+            filteredTasks.map((task) => (
+              <li
+                key={task.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.5rem 0',
+                  borderBottom: '1px solid #ddd',
+                }}
               >
-                Hapus
-              </button>
-            </li>
-          ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={task.done}
+                    onChange={() => toggleTask(task.id, task.done)}
+                  />
+                  <span style={{ textDecoration: task.done ? 'line-through' : 'none', color: task.done ? '#888' : '#000' }}>
+                    {task.title}
+                  </span>
+                </div>
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  style={{ background: '#ff4d4f', color: '#fff', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
+                >
+                  Hapus
+                </button>
+              </li>
+            ))
+          )}
         </ul>
       )}
     </div>
