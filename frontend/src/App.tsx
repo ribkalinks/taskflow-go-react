@@ -15,6 +15,10 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
+  // State baru untuk menangani mode edit task
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
   // Fetch tasks dari backend Go
   const fetchTasks = async () => {
     try {
@@ -86,6 +90,37 @@ function App() {
     }
   };
 
+  // Fungsi baru: Mulai mengedit task
+  const startEditing = (task: Task) => {
+    setEditingId(task.id);
+    setEditText(task.title);
+  };
+
+  // Fungsi baru: Simpan hasil edit task (PUT)
+  const saveEditTask = async (id: string) => {
+    if (!editText.trim()) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editText }),
+      });
+
+      if (res.ok) {
+        setTasks(
+          tasks.map((task) =>
+            task.id === id ? { ...task, title: editText } : task
+          )
+        );
+        setEditingId(null);
+        setEditText('');
+      }
+    } catch (err) {
+      console.error("Gagal mengedit task:", err);
+    }
+  };
+
   // Fungsi hapus task tunggal (DELETE)
   const deleteTask = async (id: string) => {
     try {
@@ -101,11 +136,10 @@ function App() {
     }
   };
 
-  // Fungsi baru: Menghapus semua task yang sudah selesai
+  // Hapus semua task yang selesai
   const clearCompletedTasks = async () => {
     const completedTasks = tasks.filter((task) => task.done);
     try {
-      // Hapus satu per satu dari backend (atau buat endpoint khusus batch delete jika ada)
       await Promise.all(
         completedTasks.map((task) =>
           fetch(`http://localhost:8080/api/tasks/${task.id}`, { method: 'DELETE' })
@@ -117,15 +151,13 @@ function App() {
     }
   };
 
-  // Menghitung task yang belum selesai
   const unresolvedTaskCount = tasks.filter((task) => !task.done).length;
 
-  // Logika Filter Status + Pencarian Teks
   const filteredTasks = tasks
     .filter((task) => {
       if (filter === 'active') return !task.done;
       if (filter === 'completed') return task.done;
-      return true; // 'all'
+      return true;
     })
     .filter((task) => 
       task.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -135,7 +167,6 @@ function App() {
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
       <h1>TaskFlow Full-Stack</h1>
 
-      {/* Form Tambah Task */}
       <form onSubmit={addTask} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
         <input
           type="text"
@@ -147,7 +178,6 @@ function App() {
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>Simpan</button>
       </form>
 
-      {/* Input Pencarian */}
       <input
         type="text"
         placeholder="Cari task..."
@@ -156,11 +186,9 @@ function App() {
         style={{ width: '100%', padding: '0.5rem', marginBottom: '1.5rem', boxSizing: 'border-box' }}
       />
 
-      {/* Indikator Loading & Error */}
       {loading && <p style={{ color: '#666' }}>Memuat data...</p>}
       {error && <p style={{ color: '#ff4d4f' }}>{error}</p>}
 
-      {/* Informasi Jumlah Task & Tombol Clear */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <p style={{ color: '#555', margin: 0 }}>
           Task belum selesai: {unresolvedTaskCount}
@@ -175,7 +203,6 @@ function App() {
         )}
       </div>
 
-      {/* Tombol Filter */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <button 
           onClick={() => setFilter('all')}
@@ -197,7 +224,6 @@ function App() {
         </button>
       </div>
 
-      {/* Daftar Task */}
       {!loading && !error && (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {filteredTasks.length === 0 ? (
@@ -214,22 +240,49 @@ function App() {
                   borderBottom: '1px solid #ddd',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, marginRight: '1rem' }}>
                   <input
                     type="checkbox"
                     checked={task.done}
                     onChange={() => toggleTask(task.id, task.done)}
                   />
-                  <span style={{ textDecoration: task.done ? 'line-through' : 'none', color: task.done ? '#888' : '#000' }}>
-                    {task.title}
-                  </span>
+                  {editingId === task.id ? (
+                    <input
+                      type="text"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      style={{ flex: 1, padding: '0.2rem' }}
+                    />
+                  ) : (
+                    <span style={{ textDecoration: task.done ? 'line-through' : 'none', color: task.done ? '#888' : '#000' }}>
+                      {task.title}
+                    </span>
+                  )}
                 </div>
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  style={{ background: '#ff4d4f', color: '#fff', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
-                >
-                  Hapus
-                </button>
+
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  {editingId === task.id ? (
+                    <button
+                      onClick={() => saveEditTask(task.id)}
+                      style={{ background: '#28a745', color: '#fff', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
+                    >
+                      Simpan
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => startEditing(task)}
+                      style={{ background: '#ffc107', color: '#000', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    onClick={() => deleteTask(task.id)}
+                    style={{ background: '#ff4d4f', color: '#fff', border: 'none', padding: '0.3rem 0.6rem', cursor: 'pointer', borderRadius: '4px' }}
+                  >
+                    Hapus
+                  </button>
+                </div>
               </li>
             ))
           )}
