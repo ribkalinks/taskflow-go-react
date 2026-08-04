@@ -5,29 +5,27 @@ interface Task {
   id: string;
   title: string;
   done: boolean;
+  priority: 'high' | 'medium' | 'low';
 }
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
-  // State baru untuk menangani mode edit task
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
 
-  // Fetch tasks dari backend Go
   const fetchTasks = async () => {
     try {
       setLoading(true);
       setError(null);
       const res = await fetch('http://localhost:8080/api/tasks');
-      if (!res.ok) {
-        throw new Error("Gagal mengambil data dari server");
-      }
+      if (!res.ok) throw new Error("Gagal mengambil data dari server");
       const data = await res.json();
       setTasks(data);
     } catch (err) {
@@ -42,7 +40,6 @@ function App() {
     fetchTasks();
   }, []);
 
-  // Fungsi tambah task (POST)
   const addTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -51,6 +48,7 @@ function App() {
       id: Date.now().toString(),
       title: title,
       done: false,
+      priority: priority,
     };
 
     try {
@@ -63,13 +61,13 @@ function App() {
       if (res.ok) {
         setTasks([...tasks, newTask]);
         setTitle('');
+        setPriority('medium');
       }
     } catch (err) {
       console.error("Gagal menambah task:", err);
     }
   };
 
-  // Fungsi toggle status selesai (PUT)
   const toggleTask = async (id: string, currentDone: boolean) => {
     try {
       const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
@@ -90,13 +88,11 @@ function App() {
     }
   };
 
-  // Fungsi baru: Mulai mengedit task
   const startEditing = (task: Task) => {
     setEditingId(task.id);
     setEditText(task.title);
   };
 
-  // Fungsi baru: Simpan hasil edit task (PUT)
   const saveEditTask = async (id: string) => {
     if (!editText.trim()) return;
 
@@ -121,7 +117,6 @@ function App() {
     }
   };
 
-  // Fungsi hapus task tunggal (DELETE)
   const deleteTask = async (id: string) => {
     try {
       const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
@@ -136,7 +131,6 @@ function App() {
     }
   };
 
-  // Hapus semua task yang selesai
   const clearCompletedTasks = async () => {
     const completedTasks = tasks.filter((task) => task.done);
     try {
@@ -163,21 +157,42 @@ function App() {
       task.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+  // Helper warna badge prioritas
+  const getPriorityColor = (p: string) => {
+    switch (p) {
+      case 'high': return '#ff4d4f';
+      case 'medium': return '#faad14';
+      case 'low': return '#52c41a';
+      default: return '#8c8c8c';
+    }
+  };
+
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
       <h1>TaskFlow Full-Stack</h1>
 
-      <form onSubmit={addTask} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+      {/* Form Tambah Task + Prioritas */}
+      <form onSubmit={addTask} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <input
           type="text"
           placeholder="Tambah task baru..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={{ flex: 1, padding: '0.5rem' }}
+          style={{ flex: 1, padding: '0.5rem', minWidth: '200px' }}
         />
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as any)}
+          style={{ padding: '0.5rem' }}
+        >
+          <option value="high">Penting (High)</option>
+          <option value="medium">Sedang (Medium)</option>
+          <option value="low">Santai (Low)</option>
+        </select>
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>Simpan</button>
       </form>
 
+      {/* Pencarian */}
       <input
         type="text"
         placeholder="Cari task..."
@@ -246,6 +261,22 @@ function App() {
                     checked={task.done}
                     onChange={() => toggleTask(task.id, task.done)}
                   />
+                  
+                  {/* Badge Prioritas */}
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      color: '#fff',
+                      backgroundColor: getPriorityColor(task.priority),
+                      textTransform: 'uppercase',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {task.priority}
+                  </span>
+
                   {editingId === task.id ? (
                     <input
                       type="text"
