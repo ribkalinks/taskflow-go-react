@@ -1,20 +1,18 @@
 # TaskFlow
 
-TaskFlow is a robust task management application designed to bridge frontend reactivity with backend performance. This project serves as a showcase of a full-stack architectural approach, focusing on clean separation of concerns and scalable system design.
+TaskFlow is a full-stack task management application built to showcase the integration between a Go (Golang) backend and a React (Vite) frontend.
 
-## Technical Architecture
+## Technical Stack
 
-*   **Backend:** Go (Golang)
-*   **Frontend:** React.js / Vite
-*   **Communication:** RESTful API
-*   **Infrastructure Strategy:** Docker-ready, AWS-aligned deployment patterns
+- **Backend:** Go (Golang)
+- **Frontend:** React.js / Vite
+- **API:** RESTful API
 
-## Core Capabilities
+## Core Features
 
-- **State Management:** Real-time synchronization between client-side operations and persistent backend storage.
-- **RESTful Design:** Standardized CRUD operations ensuring predictable data flow.
-- **Performance-First Backend:** Leveraging Go’s concurrency model for efficient task processing.
-- **Modular Design:** Frontend and backend components are decoupled to facilitate future service-oriented extensions.
+- **Task Lifecycle:** Full CRUD operations for task management.
+- **Priority System:** Categorization of tasks by urgency (High, Medium, Low).
+- **Responsive Interface:** Clean and efficient UI for task tracking.
 
 ## Local Development
 
@@ -26,5 +24,5 @@ TaskFlow is a robust task management application designed to bridge frontend rea
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/your-username/taskflow-app.git](https://github.com/your-username/taskflow-app.git)
+   git clone [https://github.com/ribkalinks/taskflow-go-react.git](https://github.com/ribkalinks/taskflow-go-react.git)
    cd taskflow-app
